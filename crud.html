@@ -1,0 +1,448 @@
+<!--RegistrationController  -->
+
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Registration;
+use Illuminate\Http\Request;
+
+class RegistrationController extends Controller
+{
+    public function index()
+    {
+        $registrations = Registration::all();
+        return view('registrations.index', compact('registrations'));
+    }
+
+    public function create()
+    {
+        return view('registrations.create');
+    }
+
+    public function store(Request $request)
+    {
+        $request->validate([
+            'name' => 'required',
+            'email' => 'required|email|unique:registrations',
+            'password' => 'required'
+        ]);
+
+        Registration::create($request->all());
+
+        return redirect()->route('registrations.index')
+                         ->with('success', 'Registration created successfully.');
+    }
+
+    public function show(Registration $registration)
+    {
+        return view('registrations.show', compact('registration'));
+    }
+
+    public function edit(Registration $registration)
+    {
+        return view('registrations.edit', compact('registration'));
+    }
+
+    public function update(Request $request, Registration $registration)
+    {
+        $request->validate([
+            'name' => 'required',
+            'email' => 'required|email|unique:registrations,email,'.$registration->id,
+            'password' => 'required'
+        ]);
+
+        $registration->update($request->all());
+
+        return redirect()->route('registrations.index')
+                         ->with('success', 'Registration updated successfully.');
+    }
+
+    public function destroy(Registration $registration)
+    {
+        $registration->delete();
+
+        return redirect()->route('registrations.index')
+                         ->with('success', 'Registration deleted successfully.');
+    }
+}
+
+
+
+
+
+<!--Registration model  -->
+
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+class Registration extends Model
+{
+    use HasFactory;
+
+    protected $fillable = [
+        'name',
+        'email',
+        'password',
+    ];
+}
+
+
+
+
+
+
+
+
+<!--migration file  -->
+
+Update the migration file (database/migrations/xxxx_xx_xx_create_registrations_table.php):
+
+
+public function up()
+{
+    Schema::create('registrations', function (Blueprint $table) {
+        $table->id();
+        $table->string('name');
+        $table->string('email')->unique();
+        $table->string('password');
+        $table->timestamps();
+    });
+}
+
+
+
+
+<!-- migration file or -->
+
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('users', function (Blueprint $table) {
+            $table->id();
+            $table->string('name');
+            $table->string('email')->unique();
+            $table->timestamp('email_verified_at')->nullable();
+            $table->string('password');
+            $table->rememberToken();
+            $table->timestamps();
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('users');
+    }
+};
+
+
+
+
+<!-- web file -->
+
+<?php
+
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\RegistrationController;
+
+/*
+|--------------------------------------------------------------------------
+| Web Routes
+|--------------------------------------------------------------------------
+|
+| Here is where you can register web routes for your application. These
+| routes are loaded by the RouteServiceProvider and all of them will
+| be assigned to the "web" middleware group. Make something great!
+|
+*/
+
+
+
+Route::resource('registrations', RegistrationController::class);
+
+
+
+
+<!-- database -->
+
+DB_DATABASE=registration_form_db
+
+
+
+<!-- table   -->
+
+Create the registrations table:
+
+
+CREATE TABLE registrations (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP NULL DEFAULT NULL,
+    updated_at TIMESTAMP NULL DEFAULT NULL
+);
+
+
+
+<!-- view file -->
+
+
+create registrations   folder  and inside ,
+
+
+
+<!-- create.blade.php -->
+@extends('registrations.layout')
+
+@section('content')
+<div class="row">
+    <div class="col-lg-12 margin-tb">
+        <div class="pull-left">
+            <h2>Add New Registration</h2>
+        </div>
+        <div class="pull-right">
+            <a class="btn btn-primary" href="{{ route('registrations.index') }}"> Back</a>
+        </div>
+    </div>
+</div>
+
+@if ($errors->any())
+<div class="alert alert-danger">
+    <strong>Whoops!</strong> There were some problems with your input.<br><br>
+    <ul>
+        @foreach ($errors->all() as $error)
+        <li>{{ $error }}</li>
+        @endforeach
+    </ul>
+</div>
+@endif
+
+<form action="{{ route('registrations.store') }}" method="POST">
+    @csrf
+
+    <div class="row">
+        <div class="col-xs-12 col-sm-12 col-md-12">
+            <div class="form-group">
+                <strong>Name:</strong>
+                <input type="text" name="name" class="form-control" placeholder="Name">
+            </div>
+        </div>
+        <div class="col-xs-12 col-sm-12 col-md-12">
+            <div class="form-group">
+                <strong>Email:</strong>
+                <input type="text" name="email" class="form-control" placeholder="Email">
+            </div>
+        </div>
+        <div class="col-xs-12 col-sm-12 col-md-12">
+            <div class="form-group">
+                <strong>Password:</strong>
+                <input type="password" name="password" class="form-control" placeholder="Password">
+            </div>
+        </div>
+        <div class="col-xs-12 col-sm-12 col-md-12 text-center">
+            <button type="submit" class="btn btn-primary">Submit</button>
+        </div>
+    </div>
+</form>
+@endsection
+
+
+<!-- edit.blade.php -->
+@extends('registrations.layout')
+
+@section('content')
+<div class="row">
+    <div class="col-lg-12 margin-tb">
+        <div class="pull-left">
+            <h2>Edit Registration</h2>
+        </div>
+        <div class="pull-right">
+            <a class="btn btn-primary" href="{{ route('registrations.index') }}"> Back</a>
+        </div>
+    </div>
+</div>
+
+@if ($errors->any())
+<div class="alert alert-danger">
+    <strong>Whoops!</strong> There were some problems with your input.<br><br>
+    <ul>
+        @foreach ($errors->all() as $error)
+        <li>{{ $error }}</li>
+        @endforeach
+    </ul>
+</div>
+@endif
+
+<form action="{{ route('registrations.update', $registration->id) }}" method="POST">
+    @csrf
+    @method('PUT')
+
+    <div class="row">
+        <div class="col-xs-12 col-sm-12 col-md-12">
+            <div class="form-group">
+                <strong>Name:</strong>
+                <input type="text" name="name" value="{{ $registration->name }}" class="form-control" placeholder="Name">
+            </div>
+        </div>
+        <div class="col-xs-12 col-sm-12 col-md-12">
+            <div class="form-group">
+                <strong>Email:</strong>
+                <input type="text" name="email" value="{{ $registration->email }}" class="form-control" placeholder="Email">
+            </div>
+        </div>
+        <div class="col-xs-12 col-sm-12 col-md-12">
+            <div class="form-group">
+                <strong>Password:</strong>
+                <input type="password" name="password" value="{{ $registration->password }}" class="form-control" placeholder="Password">
+            </div>
+        </div>
+        <div class="col-xs-12 col-sm-12 col-md-12 text-center">
+            <button type="submit" class="btn btn-primary">Submit</button>
+        </div>
+    </div>
+</form>
+@endsection
+
+
+
+
+<!-- index.blade.php -->
+
+@extends('registrations.layout')
+
+@section('content')
+<div class="row">
+    <div class="col-lg-12 margin-tb">
+        <div class="pull-left">
+            <h2>Laravel Registration Form</h2>
+        </div>
+        <div class="pull-right">
+            <a class="btn btn-success" href="{{ route('registrations.create') }}"> Create New Registration</a>
+        </div>
+    </div>
+</div>
+
+@if ($message = Session::get('success'))
+<div class="alert alert-success">
+    <p>{{ $message }}</p>
+</div>
+@endif
+
+<table class="table table-bordered">
+    <tr>
+        <th>No</th>
+        <th>Name</th>
+        <th>Email</th>
+        <th>Password</th>
+        <th width="280px">Action</th>
+    </tr>
+    @foreach ($registrations as $registration)
+    <tr>
+
+        <td>{{ $registration->name }}</td>
+        <td>{{ $registration->email }}</td>
+        <td>{{ $registration->password }}</td>
+        <td>
+            <form action="{{ route('registrations.destroy', $registration->id) }}" method="POST">
+
+                <a class="btn btn-info" href="{{ route('registrations.show', $registration->id) }}">Show</a>
+
+                <a class="btn btn-primary" href="{{ route('registrations.edit', $registration->id) }}">Edit</a>
+
+                @csrf
+                @method('DELETE')
+
+                <button type="submit" class="btn btn-danger">Delete</button>
+            </form>
+        </td>
+    </tr>
+    @endforeach
+</table>
+
+@endsection
+
+
+
+<!-- layout.blade.php -->
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Laravel Registration Form</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/5.0.0/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container">
+        @yield('content')
+    </div>
+</body>
+</html>
+
+
+
+<!-- show.blade.php -->
+@extends('registrations.layout')
+
+@section('content')
+<div class="row">
+    <div class="col-lg-12 margin-tb">
+        <div class="pull-left">
+            <h2> Show Registration</h2>
+        </div>
+        <div class="pull-right">
+            <a class="btn btn-primary" href="{{ route('registrations.index') }}"> Back</a>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-xs-12 col-sm-12 col-md-12">
+        <div class="form-group">
+            <strong>Name:</strong>
+            {{ $registration->name }}
+        </div>
+    </div>
+    <div class="col-xs-12 col-sm-12 col-md-12">
+        <div class="form-group">
+            <strong>Email:</strong>
+            {{ $registration->email }}
+        </div>
+    </div>
+    <div class="col-xs-12 col-sm-12 col-md-12">
+        <div class="form-group">
+            <strong>Password:</strong>
+            {{ $registration->password }}
+        </div>
+    </div>
+</div>
+@endsection
+
+
+
+
+
+<!--  -->
+php artisan make:model Registration
+php artisan make:controller Registrationcontroller
+
+php artisan serve
+
+php 
